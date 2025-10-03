@@ -1,0 +1,133 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../node_modules/.prisma/client"
+}
+
+datasource db {
+  provider = "mysql"
+  url = env("DATABASE_URL")
+}
+
+
+model User {
+	id String @id @default(uuid()) @map("id")
+  loginId String @db.VarChar(30) @unique @map("login_id")
+	name String @db.VarChar(5) @map("name")
+	email String? @db.VarChar(64) @unique @map("email")
+	password String @db.VarChar(64) @map("password")
+  nickname String @db.VarChar(16) @unique @map("nickname")
+  gender GenderEnum? @map("gender")
+  birth DateTime? @db.Date @map("birth")
+  phoneNumber String @db.VarChar(15) @unique @map("phone_number")
+  nicknameCheck DateTime? @map("nickname_check")
+	createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+  deletedAt Boolean @default(false) @map("deleted_at")
+
+	posts Post[]
+  postLikes PostLike[]
+  postComments PostComment[]
+  postCommentLikes PostCommentLike[]
+  roles Role?
+
+  @@map("users")
+}
+
+enum GenderEnum {
+  MAN 
+  WOMAN
+}
+
+model Role {
+  id String @id @default(uuid()) @map("id")
+  role RoleEnum @default(USER) @map("role")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+  userId String @unique @map("user_id")
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@map("roles")
+}
+
+enum RoleEnum {
+  GUEST
+  USER
+  ADMIN
+}
+
+model Post {
+	id String @id @default(uuid()) @map("id")
+	title String @db.VarChar(15) @map("title")
+	context String? @db.Text @map("context")
+	genre GenreEnum @default(COMPUTER) @map("genre")
+	createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+  deletedAt Boolean @default(false) @map("deleted_at")
+  userId String @map("user_id")
+
+  postLikes PostLike[]
+  postComments PostComment[]
+  PostCommentLikes PostCommentLike[]
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@map("posts")
+}
+
+enum GenreEnum {
+  COMPUTER
+  MOBILE
+}
+
+model PostLike {
+  id String @id @default(uuid()) @map("id")
+  createdAt DateTime @default(now()) @map("created_at")
+  userId String @map("user_id")
+  postId String @map("post_id")
+
+  user User @relation(fields: [userId], references: [id])
+  post Post @relation(fields: [postId], references: [id])
+
+  @@map("post_likes")
+}
+
+model PostComment {
+  id String @id @default(uuid()) @map("id")
+  context String @db.Text @map("context")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+  userId String @map("user_id")
+  postId String @map("post_id")
+  parentId String? @map("parent_id")
+  deletedAt Boolean @default(false) @map("deleted_at")
+
+  childComments PostComment[] @relation("childComments")
+  postCommentLikes PostCommentLike[]
+  
+  user User @relation(fields: [userId], references: [id])
+  post Post @relation(fields: [postId], references: [id])
+  parentComment PostComment? @relation("childComments", fields: [parentId], references: [id])
+
+  @@map("post_comments")
+}
+
+model PostCommentLike {
+  id String @id @default(uuid()) @map("id")
+  createdAt DateTime @default(now()) @map("created_at")
+  userId String @map("user_id")
+  postId String @map("post_id")
+  commentId String @map("comment_id")
+
+  user User @relation(fields: [userId], references: [id])
+  post Post @relation(fields: [postId], references: [id])
+  postComment PostComment @relation(fields: [commentId], references: [id])
+
+  @@map("post_comment_likes")
+}

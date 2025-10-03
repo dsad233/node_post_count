@@ -1,0 +1,10 @@
+import { param } from 'express-validator';
+
+const postIdValid = param('postid')
+  .trim()
+  .isUUID()
+  .withMessage('uuid 형식이 올바르지 않습니다.');
+
+export function PostLikeRequestDto() {
+  return [postIdValid];
+}

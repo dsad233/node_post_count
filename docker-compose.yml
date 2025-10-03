@@ -1,0 +1,41 @@
+services:
+  local-db:
+    image: mysql:8.0
+    container_name: mysql_db
+    ports:
+      - ${DB_PORT}:3306
+    environment:
+      MYSQL_DATABASE: ${DB_NAME}
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD}
+      TZ: ${TZ}
+    volumes:
+      - ./db/mysql/data:/var/lib/mysql
+      - ./db/mysql/init:/docker-entrypoint-initdb.d
+      # 로그 conf 설정
+      - ./db/mysql/conf:/etc/mysql/conf.d
+      - ./db/mysql/logs:/var/log/mysql
+    platform: linux/x86_64
+    restart: always
+    networks:
+      - server
+  redis:
+    image: redis:latest
+    container_name: redis
+    ports:
+      - ${REDIS_PORT}:6379
+    command: redis-server /etc/redis/redis.conf
+    volumes:
+      - ./db/redis/data:/var/lib/redis
+      - ./db/redis/conf/redis.conf:/etc/redis/redis.conf
+      - ./db/redis/logs:/var/log/redis
+    labels:
+      - 'name=redis'
+      - 'mode=standalone'
+    restart: always
+    networks:
+      - server
+
+networks:
+  server:
+    driver: bridge
+    external: true

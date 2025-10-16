@@ -80,13 +80,16 @@ export class PostsService {
       })
     );
 
+    // 게시글 갯수 조회
+    const count = await this.postsRepository.count();
+
     return {
       posts: result,
       pagenation: {
         page: pagenationDto.page,
         pages: pagenationDto.pages,
-        totalPage: Math.floor(posts.length / pagenationDto.pages),
-        count: result.length,
+        totalPage: Math.ceil(count / pagenationDto.pages),
+        count: count,
       },
     };
   };
@@ -237,14 +240,13 @@ export class PostsService {
       },
       post_view: postView,
       postlike_count: likeCount,
-      comment_count: commentCount,
       post_comments:
         postCommentFilter.length > 0 ? postCommentFilter : undefined,
       pagenation: {
         page: pagenationDto.page,
         pages: pagenationDto.pages,
-        totalPage: Math.floor(postCommnets.length / pagenationDto.pages),
-        count: postCommnets.length,
+        totalPage: Math.ceil(commentCount / pagenationDto.pages),
+        count: commentCount,
       },
     };
   };

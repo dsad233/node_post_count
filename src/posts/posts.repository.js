@@ -20,6 +20,15 @@ export class PostsRepository {
     });
   };
 
+  // 게시글 카운트
+  count = async () => {
+    return await this.prisma.post.count({
+      where: {
+        deletedAt: STATUS.Status.FALSE,
+      },
+    });
+  };
+
   // 게시글 댓글 수 조회
   countPostComment = async (id) => {
     return await this.prisma.postComment.count({
@@ -162,18 +171,6 @@ export class PostsRepository {
         user: {
           select: {
             nickname: true,
-          },
-        },
-        postComments: {
-          select: {
-            id: true,
-            context: true,
-            childComments: {
-              select: {
-                id: true,
-                context: true,
-              },
-            },
           },
         },
       },

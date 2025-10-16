@@ -10,6 +10,7 @@ import CronRouter from './src/cron/cron.router.js';
 import { ErrorHandlerMiddleware } from './src/common/middlewares/error-exception.js';
 import cookieParser from 'cookie-parser';
 import morgan from './src/common/middlewares/morgan.js';
+import cors from './src/common/middlewares/cors.js';
 
 const app = express();
 const port = 3000;
@@ -17,6 +18,7 @@ const port = 3000;
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
+app.use(cors);
 connect();
 
 app.use(morgan);

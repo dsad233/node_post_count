@@ -35,6 +35,6 @@ export const SessionValidation = async function (req, res, next) {
   } else {
     return res
       .status(StatusCodes.UNAUTHORIZED)
-      .json({ message: '로그인을 시도해주세요.' });
+      .json({ message: '로그인을 시도해 주세요.' });
   }
 };

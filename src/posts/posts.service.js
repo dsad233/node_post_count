@@ -80,7 +80,15 @@ export class PostsService {
       })
     );
 
-    return result;
+    return {
+      posts: result,
+      pagenation: {
+        page: pagenationDto.page,
+        pages: pagenationDto.pages,
+        totalPage: Math.floor(posts.length / pagenationDto.pages),
+        count: result.length,
+      },
+    };
   };
 
   // 게시글 상세 목록 조회
@@ -232,6 +240,12 @@ export class PostsService {
       comment_count: commentCount,
       post_comments:
         postCommentFilter.length > 0 ? postCommentFilter : undefined,
+      pagenation: {
+        page: pagenationDto.page,
+        pages: pagenationDto.pages,
+        totalPage: Math.floor(postCommnets.length / pagenationDto.pages),
+        count: postCommnets.length,
+      },
     };
   };
 

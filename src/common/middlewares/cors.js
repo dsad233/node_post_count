@@ -10,6 +10,7 @@ const corsOptions = {
       callback(new Error('Not Allowed Origin!')); // cors 비허용
     }
   },
+  credentials: true,
 };
 
-export default cors({ origin: '*' });
+export default cors(corsOptions);

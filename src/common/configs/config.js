@@ -5,6 +5,7 @@ dotenv.config();
  * Default
  */
 export const NODE_ENV = process.env.NODE_ENV;
+export const SIGNED_COOKIE_KEY = process.env.SIGNED_COOKIE_KEY;
 
 /**
  * MongoDB

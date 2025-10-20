@@ -11,13 +11,14 @@ import { ErrorHandlerMiddleware } from './src/common/middlewares/error-exception
 import cookieParser from 'cookie-parser';
 import morgan from './src/common/middlewares/morgan.js';
 import cors from './src/common/middlewares/cors.js';
+import { SIGNED_COOKIE_KEY } from './src/common/configs/config.js';
 
 const app = express();
 const port = 3000;
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-app.use(cookieParser());
+app.use(cookieParser(SIGNED_COOKIE_KEY));
 app.use(cors);
 connect();
 

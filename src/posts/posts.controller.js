@@ -35,12 +35,13 @@ export class PostsController {
   });
 
   // 게시글 상세 목록 조회
-  // 조회수
   findOne = asyncWrapper(async (req, res) => {
     const { id } = req.params;
     const { page, pages, ...args } = req.query;
-    const record = req.cookies[`${id}`]
-      ? req.cookies[`${id}`].trim()
+    // 인섬니아 origin 해결 해봐야함. -> 오리진을 설정하면 인섬니아는 접속이 안댐.
+    // Redis 트랜잭션 설정 필요. -> 데이터 유실 위험성 방지
+    const signedRecord = req.signedCookies[`${id}`]
+      ? req.signedCookies[`${id}`].trim()
       : undefined;
 
     const post = await this.postsService.findOne(
@@ -49,15 +50,19 @@ export class PostsController {
       PostQuery(args)
     );
 
-    if (!record) {
+    if (!signedRecord) {
       // 쿠키 저장 -> 조회한 날짜 쿠키에 저장
-      res.cookie(id, dateConvert(new Date()), {
-        httpOnly: true,
-        maxAge: 600000,
-        secure: true,
-      });
+      await Promise.all([
+        res.cookie(id, dateConvert(new Date()), {
+          httpOnly: true,
+          maxAge: 600000,
+          secure: true,
+          sameSite: true,
+          signed: true,
+        }),
 
-      await this.postsService.countUpdate(id);
+        await this.postsService.countUpdate(id),
+      ]);
     }
 
     return res

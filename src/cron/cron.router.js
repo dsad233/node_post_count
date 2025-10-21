@@ -9,7 +9,8 @@ const router = express.Router();
 const cronService = new CronService();
 const cronController = new CronController(cronService);
 
-cron.schedule('5 * * * * *', cronController.updateViews);
-cron.schedule('8 * * * * *', cronController.getViews);
+cron.schedule('30 * * * * *', cronController.updateViews);
+// 1분 마다 실행
+cron.schedule('*/1 * * * *', cronController.getViews);
 
 export default router;

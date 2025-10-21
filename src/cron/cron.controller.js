@@ -4,7 +4,7 @@ export class CronController {
     this.cronService = cronService;
   }
 
-  // 주기마다(2분) 업데이트
+  // 주기마다(1분) 업데이트
   updateViews = asyncWrapper(async () => {
     await this.cronService.updateViews();
   });

@@ -22,7 +22,6 @@ export class CronService {
 
   // RabbitMQ에 누적된 조회수 합산 후 NoSQL에 업로드
   getViews = async () => {
-    let count = 0;
     const keys = await redisClient.keys(
       `${TYPE.PrefixType.COUNT}:${TYPE.PrefixType.POST}:*`
     );
@@ -37,14 +36,17 @@ export class CronService {
             const postId = key.slice(key.search('postId=') + 7);
 
             const postView = await postViewSchema.findOne({ postId }).exec();
-
-            count = Number(postView.view) + Number(msg);
-            // 조회수 업데이트
-            await postViewSchema.updateOne({ postId }, { view: count });
+            if (postView) {
+              // 조회수 업데이트
+              await postViewSchema.updateOne(
+                { postId: postView.postId },
+                { $inc: { view: Number(msg) } }
+              );
+            }
           }
         }
       }
-      // 기존 저장 되었었던 Redis 데이터들 삭제
+      // 기존에 저장 되었었던 Redis 데이터들 삭제
       await redisClient.del(keys);
     }
   };

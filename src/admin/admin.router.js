@@ -5,6 +5,7 @@ import { AdminRepository } from './admin.repository.js';
 import { AdminService } from './admin.service.js';
 import { AdminController } from './admin.controller.js';
 
+import { AsyncWrapper } from '../common/middlewares/async.js';
 import { SessionValidation } from '../common/middlewares/session-validation.js';
 import { RoleValidation } from '../common/middlewares/role-validation.js';
 
@@ -23,7 +24,7 @@ router.get(
   validate(AdminRequestDto()),
   SessionValidation,
   RoleValidation,
-  adminController.findOne
+  AsyncWrapper(adminController.findOne)
 );
 
 // 유저 가입자 수 조회
@@ -31,7 +32,7 @@ router.get(
   '/users/count',
   SessionValidation,
   RoleValidation,
-  adminController.count
+  AsyncWrapper(adminController.count)
 );
 
 export default router;

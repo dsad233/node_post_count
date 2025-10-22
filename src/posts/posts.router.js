@@ -26,6 +26,7 @@ import { PostCommentLikesService } from './post-comments/post-comment-likes/post
 import { PostCommentLikesController } from './post-comments/post-comment-likes/post-comment-likes.controller.js';
 import { PostCommentLikeDto } from './post-comments/post-comment-likes/dto/postCommentLikeDto.js';
 
+import { AsyncWrapper } from '../common/middlewares/async.js';
 import { SessionValidation } from '../common/middlewares/session-validation.js';
 import { GuestValidation } from '../common/middlewares/guest-validation.js';
 
@@ -42,7 +43,7 @@ router.post(
   '',
   validate(CreatePostDto()),
   SessionValidation,
-  postsController.create
+  AsyncWrapper(postsController.create)
 );
 
 router.get('', GuestValidation, postsController.find);
@@ -50,20 +51,20 @@ router.get(
   '/:id',
   validate(PostRequestDto()),
   GuestValidation,
-  postsController.findOne
+  AsyncWrapper(postsController.findOne)
 );
 
 router.patch(
   '/:id',
   validate([...PostRequestDto(), ...UpdatePostDto()]),
   SessionValidation,
-  postsController.update
+  AsyncWrapper(postsController.update)
 );
 router.delete(
   '/:id',
   validate(PostRequestDto()),
   SessionValidation,
-  postsController.remove
+  AsyncWrapper(postsController.remove)
 );
 
 // Post-Likes
@@ -75,13 +76,13 @@ router.post(
   '/:postid/postlikes',
   validate(PostLikeRequestDto()),
   SessionValidation,
-  postLikesController.createAndRemove
+  AsyncWrapper(postLikesController.createAndRemove)
 );
 router.get(
   '/:postid/postlikes',
   validate(PostLikeRequestDto()),
   GuestValidation,
-  postLikesController.find
+  AsyncWrapper(postLikesController.find)
 );
 
 // Post-Comments
@@ -93,37 +94,37 @@ router.post(
   '/:postid/postcomments',
   validate([...PostCommentRequestDto(), ...CreatePostComments()]),
   SessionValidation,
-  postCommentsController.create
+  AsyncWrapper(postCommentsController.create)
 );
 router.patch(
   '/:postid/postcomments/:id',
   validate([...PostCommentRequestDto(), ...UpdatePostComments()]),
   SessionValidation,
-  postCommentsController.update
+  AsyncWrapper(postCommentsController.update)
 );
 router.delete(
   '/:postid/postcomments/:id',
   validate(PostCommentRequestDto()),
   SessionValidation,
-  postCommentsController.remove
+  AsyncWrapper(postCommentsController.remove)
 );
 router.post(
   '/:postid/postcomments/parent/:parentid',
   validate([...PostReplyRequestDto(), ...CreatePostComments()]),
   SessionValidation,
-  postCommentsController.replyCreate
+  AsyncWrapper(postCommentsController.replyCreate)
 );
 router.patch(
   '/:postid/postcomments/parent/:parentid/id/:id',
   validate([...PostReplyRequestDto(), ...UpdatePostComments()]),
   SessionValidation,
-  postCommentsController.replyUpdate
+  AsyncWrapper(postCommentsController.replyUpdate)
 );
 router.delete(
   '/:postid/postcomments/parent/:parentid/id/:id',
   validate(PostReplyRequestDto()),
   SessionValidation,
-  postCommentsController.replyRemove
+  AsyncWrapper(postCommentsController.replyRemove)
 );
 
 // Post-Comment-Likes
@@ -140,7 +141,7 @@ router.post(
   '/:postid/postcomments/:id',
   validate(PostCommentLikeDto()),
   SessionValidation,
-  postCommentLikesController.createAndRemove
+  AsyncWrapper(postCommentLikesController.createAndRemove)
 );
 
 export default router;

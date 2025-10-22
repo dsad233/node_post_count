@@ -5,6 +5,7 @@ import { UsersRepository } from './users.repository.js';
 import { UsersService } from './users.service.js';
 import { UsersController } from './users.controller.js';
 
+import { AsyncWrapper } from '../common/middlewares/async.js';
 import { SessionValidation } from '../common/middlewares/session-validation.js';
 
 import {
@@ -24,19 +25,19 @@ router.get(
   '/nickname/check',
   validate(CheckNicknameDto()),
   SessionValidation,
-  usersController.nicknameCheck
+  AsyncWrapper(usersController.nicknameCheck)
 );
 router.get(
   '/permission',
   validate(CheckPasswordDto()),
   SessionValidation,
-  usersController.updatePermission
+  AsyncWrapper(usersController.updatePermission)
 );
 router.patch(
   '',
   validate(UpdateUserDto()),
   SessionValidation,
-  usersController.update
+  AsyncWrapper(usersController.update)
 );
 router.delete('', SessionValidation, usersController.remove);
 

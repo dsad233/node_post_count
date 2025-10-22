@@ -1,5 +1,5 @@
 // 공통 try catch
-export const asyncWrapper = function (fn) {
+export const AsyncWrapper = function (fn) {
   return async (req, res, next) => {
     try {
       await fn(req, res, next);

@@ -1,4 +1,4 @@
-import { transactionWrapper } from '../common/middlewares/transaction.js';
+import { TransactionWrapper } from '../common/middlewares/transaction.js';
 export class AuthRepository {
   constructor(prisma) {
     this.prisma = prisma;
@@ -81,7 +81,7 @@ export class AuthRepository {
     birth,
     phoneNumber
   ) => {
-    await transactionWrapper(async (tx) => {
+    await TransactionWrapper(async (tx) => {
       const newUser = await tx.user.create({
         data: {
           loginId,

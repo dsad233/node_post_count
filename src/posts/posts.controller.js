@@ -1,4 +1,3 @@
-import { asyncWrapper } from '../common/middlewares/async.js';
 import { StatusCodes } from 'http-status-codes';
 import { PagenationDto } from '../common/pagination/paginetionDto.js';
 import { PostQuery } from './dto/postRequestDto.js';
@@ -9,7 +8,7 @@ export class PostsController {
   }
 
   // 게시글 생성
-  create = asyncWrapper(async (req, res) => {
+  create = async (req, res) => {
     const { id } = req.user;
     const { title, context, genre } = req.body;
 
@@ -18,10 +17,10 @@ export class PostsController {
     return res
       .status(StatusCodes.CREATED)
       .json({ message: '게시글 생성 완료.' });
-  });
+  };
 
   // 게시글 전체 조회
-  find = asyncWrapper(async (req, res) => {
+  find = async (req, res) => {
     const { page, pages, ...args } = req.query;
 
     const posts = await this.postsService.find(
@@ -32,14 +31,13 @@ export class PostsController {
     return res
       .status(StatusCodes.OK)
       .json({ message: '게시글 전체 조회 완료.', data: posts });
-  });
+  };
 
   // 게시글 상세 목록 조회
-  findOne = asyncWrapper(async (req, res) => {
+  findOne = async (req, res) => {
     const { id } = req.params;
     const { page, pages, ...args } = req.query;
     // 인섬니아 origin 해결 해봐야함. -> 오리진을 설정하면 인섬니아는 접속이 안댐.
-    // Redis 트랜잭션 설정 필요. -> 데이터 유실 위험성 방지
     const signedRecord = req.signedCookies[`${id}`]
       ? req.signedCookies[`${id}`].trim()
       : undefined;
@@ -68,10 +66,10 @@ export class PostsController {
     return res
       .status(StatusCodes.OK)
       .json({ message: '게시글 상세 목록 조회 완료.', data: post });
-  });
+  };
 
   // 게시글 업데이트
-  update = asyncWrapper(async (req, res) => {
+  update = async (req, res) => {
     const userId = req.user.id;
     const { id } = req.params;
     const { title, context, genre } = req.body;
@@ -81,15 +79,15 @@ export class PostsController {
     return res
       .status(StatusCodes.OK)
       .json({ message: '게시글 업데이트 완료.' });
-  });
+  };
 
   // 게시글 삭제 (소프트 삭제)
-  remove = asyncWrapper(async (req, res) => {
+  remove = async (req, res) => {
     const userId = req.user.id;
     const { id } = req.params;
 
     await this.postsService.remove(id, userId);
 
     return res.status(StatusCodes.OK).json({ message: '게시글 삭제 완료.' });
-  });
+  };
 }

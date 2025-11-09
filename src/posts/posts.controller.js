@@ -1,5 +1,5 @@
 import { StatusCodes } from 'http-status-codes';
-import { PagenationDto } from '../common/pagination/paginetionDto.js';
+import { PagenationDto } from '../common/pagination/paginationDto.js';
 import { PostQuery } from './dto/postRequestDto.js';
 import { dateConvert } from '../common/utils.js';
 export class PostsController {

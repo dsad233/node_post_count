@@ -1,8 +1,9 @@
 import { PrismaClient } from '@prisma/client';
+import { NODE_ENV } from '../src/common/configs/config.js';
 
 let logger;
 
-if (process.env.NODE_ENV === 'production') {
+if (NODE_ENV === 'production') {
   logger = ['warn', 'error'];
 } else {
   logger = ['query', 'info', 'warn', 'error'];

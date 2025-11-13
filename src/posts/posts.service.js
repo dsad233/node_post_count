@@ -64,6 +64,7 @@ export class PostsService {
               nickname: data.user?.nickname,
             },
             post_view: postView,
+            post_comments_count: data._count.postComments
           };
         } else {
           return {
@@ -75,6 +76,7 @@ export class PostsService {
               nickname: data.user?.nickname,
             },
             post_view: postView,
+            post_comments_count: data._count.postComments
           };
         }
       })
@@ -242,6 +244,7 @@ export class PostsService {
       postlike_count: likeCount,
       post_comments:
         postCommentFilter.length > 0 ? postCommentFilter : undefined,
+      post_comments_count: commentCount,
       pagenation: {
         page: pagenationDto.page,
         pages: pagenationDto.pages,

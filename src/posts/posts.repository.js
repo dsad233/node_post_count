@@ -173,6 +173,11 @@ export class PostsRepository {
             nickname: true,
           },
         },
+        _count: {
+          select: {
+            postComments: true
+          }
+        }
       },
       orderBy: {
         createdAt: args.sort,

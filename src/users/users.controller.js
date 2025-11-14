@@ -23,6 +23,17 @@ export class UsersController {
     return res.status(StatusCodes.OK).json({ message: '인증 완료.' });
   };
 
+  // 유저 마이페이지 조회
+  getInfo = async (req, res) => {
+    const { id } = req.user;
+
+    const user = await this.usersService.getInfo(id);
+
+    return res
+      .status(StatusCodes.OK)
+      .json({ message: '마이페이지 조회 완료.', data: user });
+  };
+
   // 유저 정보 수정
   update = async (req, res) => {
     const { id } = req.user;

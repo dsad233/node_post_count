@@ -17,6 +17,21 @@ export class UsersRepository {
     });
   };
 
+  // 해당 ID 유저 조회
+  getInfo = async (id) => {
+    return await this.prisma.user.findFirst({
+      where: { id },
+      select: {
+        name: true,
+        nickname: true,
+        email: true,
+        gender: true,
+        birth: true,
+        phoneNumber: true,
+      },
+    });
+  };
+
   // 유저 닉네임 중복 유무 조회
   findByNickname = async (nickname) => {
     return await this.prisma.user.findUnique({

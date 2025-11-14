@@ -33,6 +33,7 @@ router.get(
   SessionValidation,
   AsyncWrapper(usersController.updatePermission)
 );
+router.get('/info', SessionValidation, AsyncWrapper(usersController.getInfo));
 router.patch(
   '',
   validate(UpdateUserDto()),

@@ -18,6 +18,11 @@ export class UsersService {
     }
   };
 
+  // 유저 마이페이지 조회
+  getInfo = async (id) => {
+    return await this.usersRepository.getInfo(id);
+  };
+
   // 정보 변경 권한 여부 확인
   updatePermission = async (password, userId) => {
     const user = await this.usersRepository.findById(userId);

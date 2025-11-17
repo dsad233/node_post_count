@@ -175,9 +175,9 @@ export class PostsRepository {
         },
         _count: {
           select: {
-            postComments: true
-          }
-        }
+            postComments: true,
+          },
+        },
       },
       orderBy: {
         createdAt: args.sort,
@@ -275,6 +275,9 @@ export class PostsRepository {
       },
       skip: pagenationDto.pages * (pagenationDto.page - 1),
       take: pagenationDto.pages,
+      orderBy: {
+        createdAt: 'asc',
+      },
     });
   };
 

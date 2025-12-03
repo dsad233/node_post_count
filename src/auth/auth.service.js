@@ -7,12 +7,12 @@ import {
 import { isEmailValid } from '../common/utils.js';
 import { StatusCodes } from 'http-status-codes';
 import { jwtSign, refreshSign, tokenVerify } from '../jwt/jwt.service.js';
-import redisClient from '../common/configs/redis.config.js';
 import { TYPE } from '../common/enums/index.js';
 
 export class AuthService {
-  constructor(authRepository) {
+  constructor(authRepository, redisRepository) {
     this.authRepository = authRepository;
+    this.redisRepository = redisRepository;
   }
 
   // 유저 생성
@@ -28,13 +28,32 @@ export class AuthService {
     userIp,
     userAgent
   ) => {
-    const guestSession = await redisClient.get(
+    // 락이 존재 할때 nil을 반환, 락이 존재 하지 않는다면 설정
+    const acquiredLock = await this.redisRepository.setnx(
+      `${TYPE.PrefixType.LOCKED}:${TYPE.PrefixType.AUTH}`,
+      180000,
+      'locked'
+    );
+
+    if (acquiredLock === null) {
+      let error = new Error(
+        '많은 요청이 진행되고 있습니다. 잠시 후 다시시도 해주세요.'
+      );
+      error.StatusCodes = StatusCodes.TOO_MANY_REQUESTS;
+      throw error;
+    }
+
+    const guestSession = await this.redisRepository.get(
       `${TYPE.PrefixType.SESSION}:type=${TYPE.RoleType.GUEST}:userIp=${userIp}:userAgent=${userAgent}`
     );
 
     const alreadyLoginId = await this.authRepository.findByLoginId(loginId);
 
     if (alreadyLoginId) {
+      await this.redisRepository.delete(
+        `${TYPE.PrefixType.LOCKED}:${TYPE.PrefixType.AUTH}`
+      );
+
       let error = new Error('이미 유효한 아이디 입니다.');
       error.StatusCodes = StatusCodes.BAD_REQUEST;
       throw error;
@@ -44,6 +63,10 @@ export class AuthService {
       const alreadyEmail = await this.authRepository.findByEmail(email);
 
       if (alreadyEmail) {
+        await this.redisRepository.delete(
+          `${TYPE.PrefixType.LOCKED}:${TYPE.PrefixType.AUTH}`
+        );
+
         let error = new Error('이미 유효한 이메일 입니다.');
         error.StatusCodes = StatusCodes.BAD_REQUEST;
         throw error;
@@ -53,6 +76,10 @@ export class AuthService {
     const alreadyNickname = await this.authRepository.findByNickname(nickname);
 
     if (alreadyNickname) {
+      await this.redisRepository.delete(
+        `${TYPE.PrefixType.LOCKED}:${TYPE.PrefixType.AUTH}`
+      );
+
       let error = new Error('이미 유효한 닉네임 입니다.');
       error.StatusCodes = StatusCodes.BAD_REQUEST;
       throw error;
@@ -62,6 +89,10 @@ export class AuthService {
       await this.authRepository.findByPhoneNumber(phoneNumber);
 
     if (alreadyPhoneNumber) {
+      await this.redisRepository.delete(
+        `${TYPE.PrefixType.LOCKED}:${TYPE.PrefixType.AUTH}`
+      );
+
       let error = new Error('이미 유효한 휴대폰 번호 입니다.');
       error.StatusCodes = StatusCodes.BAD_REQUEST;
       throw error;
@@ -81,8 +112,14 @@ export class AuthService {
     );
 
     if (guestSession) {
-      await redisClient.del(
+      await this.redisRepository.delete(
         `${TYPE.PrefixType.SESSION}:type=${TYPE.RoleType.GUEST}:userIp=${userIp}:userAgent=${userAgent}`
+      );
+    }
+
+    if (acquiredLock === 'OK') {
+      await this.redisRepository.delete(
+        `${TYPE.PrefixType.LOCKED}:${TYPE.PrefixType.AUTH}`
       );
     }
 
@@ -91,7 +128,7 @@ export class AuthService {
 
   // 로그인
   signIn = async (loginId, password, userIp, userAgent) => {
-    const guestSession = await redisClient.get(
+    const guestSession = await this.redisRepository.get(
       `${TYPE.PrefixType.SESSION}:type=${TYPE.RoleType.GUEST}:userIp=${userIp}:userAgent=${userAgent}`
     );
 
@@ -133,19 +170,19 @@ export class AuthService {
         date: now,
       };
 
-      await redisClient.setEx(
+      await this.redisRepository.setex(
         `${TYPE.PrefixType.SESSION}:type=${TYPE.TokenType.ACCESS}:userId=${alreadyLoginId.id}`,
         JWT_ACCESS_TTL,
         JSON.stringify(accessPayload)
       );
-      await redisClient.setEx(
+      await this.redisRepository.setex(
         `${TYPE.PrefixType.SESSION}:type=${TYPE.TokenType.REFRESH}:userId=${alreadyLoginId.id}`,
         JWT_REFRESH_TTL,
         JSON.stringify(refreshPayload)
       );
 
       if (guestSession) {
-        await redisClient.del(
+        await this.redisRepository.delete(
           `${TYPE.PrefixType.SESSION}:type=${TYPE.RoleType.GUEST}:userIp=${userIp}:userAgent=${userAgent}`
         );
       }
@@ -189,19 +226,19 @@ export class AuthService {
         date: now,
       };
 
-      await redisClient.setEx(
+      await this.redisRepository.setex(
         `${TYPE.PrefixType.SESSION}:type=${TYPE.TokenType.ACCESS}:userId=${alreadyEmail.id}`,
         JWT_ACCESS_TTL,
         JSON.stringify(accessPayload)
       );
-      await redisClient.setEx(
+      await this.redisRepository.setex(
         `${TYPE.PrefixType.SESSION}:type=${TYPE.TokenType.REFRESH}:userId=${alreadyEmail.id}`,
         JWT_REFRESH_TTL,
         JSON.stringify(refreshPayload)
       );
 
       if (guestSession) {
-        await redisClient.del(
+        await this.redisRepository.delete(
           `${TYPE.PrefixType.SESSION}:type=${TYPE.RoleType.GUEST}:userIp=${userIp}:userAgent=${userAgent}`
         );
       }
@@ -257,10 +294,10 @@ export class AuthService {
     }
 
     // 기존 세션 삭제
-    await redisClient.del(
+    await this.redisRepository.delete(
       `${TYPE.PrefixType.SESSION}:type=${TYPE.TokenType.ACCESS}:userId=${verify.id}`
     );
-    await redisClient.del(
+    await this.redisRepository.delete(
       `${TYPE.PrefixType.SESSION}:type=${TYPE.TokenType.REFRESH}:userId=${verify.id}`
     );
 
@@ -288,12 +325,12 @@ export class AuthService {
       date: now,
     };
 
-    await redisClient.setEx(
+    await this.redisRepository.setex(
       `${TYPE.PrefixType.SESSION}:type=${TYPE.TokenType.ACCESS}:userId=${user.id}`,
       JWT_ACCESS_TTL,
       JSON.stringify(accessPayload)
     );
-    await redisClient.setEx(
+    await this.redisRepository.setex(
       `${TYPE.PrefixType.SESSION}:type=${TYPE.TokenType.REFRESH}:userId=${user.id}`,
       JWT_REFRESH_TTL,
       JSON.stringify(refreshPayload)
@@ -304,10 +341,10 @@ export class AuthService {
 
   // 로그아웃
   signOut = async (id) => {
-    await redisClient.del(
+    await this.redisRepository.delete(
       `${TYPE.PrefixType.SESSION}:type=${TYPE.TokenType.ACCESS}:userId=${id}`
     );
-    await redisClient.del(
+    await this.redisRepository.delete(
       `${TYPE.PrefixType.SESSION}:type=${TYPE.TokenType.REFRESH}:userId=${id}`
     );
   };

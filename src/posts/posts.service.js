@@ -1,15 +1,36 @@
 import { StatusCodes } from 'http-status-codes';
-import redisClient from '../common/configs/redis.config.js';
 import { TYPE } from '../common/enums/index.js';
 import { dateConvert, timeConvert } from '../common/utils.js';
 export class PostsService {
-  constructor(postsRepository) {
+  constructor(postsRepository, redisRepository) {
     this.postsRepository = postsRepository;
+    this.redisRepository = redisRepository;
   }
 
   // 게시글 생성
   create = async (title, context, genre, userId) => {
+    // 락이 존재 할때 nil을 반환, 락이 존재 하지 않는다면 설정
+    const acquiredLock = await this.redisRepository.setnx(
+      `${TYPE.PrefixType.LOCKED}:${TYPE.PrefixType.POST}`,
+      180000,
+      'locked'
+    );
+
+    if (acquiredLock === null) {
+      let error = new Error(
+        '많은 요청이 진행되고 있습니다. 잠시 후 다시시도 해주세요.'
+      );
+      error.StatusCodes = StatusCodes.TOO_MANY_REQUESTS;
+      throw error;
+    }
+
     await this.postsRepository.create(title, context, genre, userId);
+
+    if (acquiredLock === 'OK') {
+      await this.redisRepository.delete(
+        `${TYPE.PrefixType.LOCKED}:${TYPE.PrefixType.POST}`
+      );
+    }
 
     return true;
   };
@@ -24,18 +45,18 @@ export class PostsService {
       throw error;
     }
 
-    const cached = await redisClient.get(
+    const cached = await this.redisRepository.get(
       `${TYPE.PrefixType.COUNT}:${TYPE.PrefixType.POST}:postId=${id}`
     );
 
     // Redis에 게시글 조회 목록이 없다면 키를 설정, 있다면 조회수 +1
     if (!cached) {
-      await redisClient.set(
+      await this.redisRepository.set(
         `${TYPE.PrefixType.COUNT}:${TYPE.PrefixType.POST}:postId=${id}`,
         1
       );
     } else {
-      await redisClient.incr(
+      await this.redisRepository.incr(
         `${TYPE.PrefixType.COUNT}:${TYPE.PrefixType.POST}:postId=${id}`
       );
     }
@@ -64,7 +85,7 @@ export class PostsService {
               nickname: data.user?.nickname,
             },
             post_view: postView,
-            post_comments_count: data._count.postComments
+            post_comments_count: data._count.postComments,
           };
         } else {
           return {
@@ -76,7 +97,7 @@ export class PostsService {
               nickname: data.user?.nickname,
             },
             post_view: postView,
-            post_comments_count: data._count.postComments
+            post_comments_count: data._count.postComments,
           };
         }
       })
@@ -256,21 +277,51 @@ export class PostsService {
 
   // 게시글 업데이트
   update = async (id, title, context, genre, userId) => {
+    // 락이 존재 할때 nil을 반환, 락이 존재 하지 않는다면 설정
+    const acquiredLock = await this.redisRepository.setnx(
+      `${TYPE.PrefixType.LOCKED}:${TYPE.PrefixType.POST}`,
+      180000,
+      'locked'
+    );
+
+    if (acquiredLock === null) {
+      ////  수정 필요
+      let error = new Error(
+        '많은 요청이 진행되고 있습니다. 잠시 후 다시시도 해주세요.'
+      );
+      error.StatusCodes = StatusCodes.TOO_MANY_REQUESTS;
+      throw error;
+    }
+
     const post = await this.postsRepository.findById(id);
 
     if (!post) {
+      await this.redisRepository.delete(
+        `${TYPE.PrefixType.LOCKED}:${TYPE.PrefixType.POST}`
+      );
+
       let error = new Error('해당 게시글은 존재하지 않습니다.');
       error.StatusCodes = StatusCodes.NOT_FOUND;
       throw error;
     }
 
     if (post.userId !== userId) {
+      await this.redisRepository.delete(
+        `${TYPE.PrefixType.LOCKED}:${TYPE.PrefixType.POST}`
+      );
+
       let error = new Error('유저 정보가 일치하지 않아 수정이 불가합니다.');
       error.StatusCodes = StatusCodes.UNAUTHORIZED;
       throw error;
     }
 
     await this.postsRepository.update(id, title, context, genre);
+
+    if (acquiredLock === 'OK') {
+      await this.redisRepository.delete(
+        `${TYPE.PrefixType.LOCKED}:${TYPE.PrefixType.POST}`
+      );
+    }
   };
 
   // 게시글 삭제 (소프트 삭제)

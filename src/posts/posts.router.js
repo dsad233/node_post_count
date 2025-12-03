@@ -1,5 +1,7 @@
 import express from 'express';
 import { prisma } from '../../prisma/prismaClient.js';
+import redis from '../common/configs/redis.config.js';
+import { RedisRepository } from '../redis/redis.repository.js';
 
 import { PostsRepository } from './posts.repository.js';
 import { PostsService } from './posts.service.js';
@@ -34,9 +36,11 @@ import { validate } from '../common/middlewares/validate.js';
 
 const router = express.Router();
 
+const redisRepository = new RedisRepository(redis);
+
 // Posts
 const postsRepository = new PostsRepository(prisma);
-const postsService = new PostsService(postsRepository);
+const postsService = new PostsService(postsRepository, redisRepository);
 const postsController = new PostsController(postsService);
 
 router.post(

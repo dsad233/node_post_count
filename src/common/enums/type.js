@@ -6,9 +6,12 @@ export const TokenType = {
 
 // 세션 타입
 export const PrefixType = {
+  AUTH: 'AUTH',
   SESSION: 'SESSION',
   POST: 'POST',
+  USER: 'USER',
   COUNT: 'COUNT',
+  LOCKED: 'LOCKED',
 };
 
 // 어드민 여부

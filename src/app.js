@@ -12,7 +12,6 @@ import cookieParser from 'cookie-parser';
 import morgan from './common/middlewares/morgan.js';
 import cors from './common/middlewares/cors.js';
 import { SIGNED_COOKIE_KEY } from './common/configs/config.js';
-import { AcquiredLockInterceptor } from './common/interceptor/acquireLockInterceptor.js';
 
 const app = express();
 const port = 3000;
@@ -22,8 +21,6 @@ app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser(SIGNED_COOKIE_KEY));
 app.use(cors);
 connect();
-
-app.use(AcquiredLockInterceptor);
 
 app.use(morgan);
 app.use('/auth', AuthRouter);
